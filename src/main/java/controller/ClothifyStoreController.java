@@ -48,6 +48,8 @@ public class ClothifyStoreController implements Initializable {
     @FXML private TextField txtCustomerName;
     @FXML private Label lblCheckoutStatus;
 
+    @FXML private TextField txtSearch;
+
     private ItemDao itemDao = new ItemDao();
     private UserDao userDao = new UserDao();
     private OrderDao orderDao = new OrderDao(); // NEW: Database access for Orders
@@ -113,7 +115,16 @@ public class ClothifyStoreController implements Initializable {
         Order newOrder = new Order(customerName, currentTotal);
         orderDao.saveOrder(newOrder);
 
-        // 2. Clear the cart
+        // 2. DEDUCT INVENTORY (NEW)
+        for (Item cartItem : cartList) {
+            // Check if stock is greater than 0 to prevent negative inventory
+            if (cartItem.getStockQuantity() > 0) {
+                cartItem.setStockQuantity(cartItem.getStockQuantity() - 1);
+                itemDao.saveOrUpdateItem(cartItem); // Update the database!
+            }
+        }
+
+        // 3. Clear the cart
         cartList.clear();
         currentTotal = 0.0;
         cartItemsContainer.getChildren().clear();
@@ -121,9 +132,12 @@ public class ClothifyStoreController implements Initializable {
         lblCartTotal.setText("Rs. 0.0");
         txtCustomerName.clear();
 
-        // 3. Show Success
+        // 4. Show Success and Refresh Grid to show new stock levels
         lblCheckoutStatus.setStyle("-fx-text-fill: green;");
-        lblCheckoutStatus.setText("Order placed successfully! Thank you.");
+        lblCheckoutStatus.setText("Order placed successfully!");
+
+        // Refresh the UI to reflect lower stock numbers
+        loadItemsToGrid();
     }
 
     // ----- AUTHENTICATION LOGIC -----
@@ -146,6 +160,23 @@ public class ClothifyStoreController implements Initializable {
             }
         } else {
             lblLoginError.setText("Invalid username, password, or access level.");
+        }
+    }
+
+    @FXML void handleSearch(ActionEvent event) {
+        String keyword = txtSearch.getText();
+        if (keyword == null || keyword.trim().isEmpty()) {
+            loadItemsToGrid(); // If search is empty, load all items
+            return;
+        }
+
+        // Fetch filtered items
+        List<Item> searchResults = itemDao.searchItemsByName(keyword);
+
+        // Clear grid and show results
+        itemGrid.getChildren().clear();
+        for (Item item : searchResults) {
+            itemGrid.getChildren().add(createProductCard(item));
         }
     }
 

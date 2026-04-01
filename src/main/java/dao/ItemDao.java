@@ -58,4 +58,13 @@ public class ItemDao {
             return query.list();
         }
     }
+
+    // Searches for items containing a specific keyword
+    public List<Item> searchItemsByName(String keyword) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<Item> query = session.createQuery("FROM Item WHERE lower(name) LIKE :keyword", Item.class);
+            query.setParameter("keyword", "%" + keyword.toLowerCase() + "%");
+            return query.list();
+        }
+    }
 }

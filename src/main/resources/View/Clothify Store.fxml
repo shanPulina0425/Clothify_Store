@@ -38,7 +38,11 @@
 
                         <HBox alignment="CENTER_RIGHT" spacing="15.0">
                             <children>
-                                <Button mnemonicParsing="false" styleClass="icon-button" text="Search" />
+                                <HBox alignment="CENTER" style="-fx-border-color: #DDDDDD; -fx-border-radius: 20; -fx-padding: 0 10 0 10; -fx-background-color: #F9F9F9; -fx-background-radius: 20;">
+                                    <TextField fx:id="txtSearch" promptText="Search items..." style="-fx-background-color: transparent; -fx-border-width: 0;" />
+                                    <Button mnemonicParsing="false" onAction="#handleSearch" style="-fx-background-color: transparent; -fx-cursor: hand; -fx-font-weight: bold;" text="Go" />
+                                </HBox>
+
                                 <Button fx:id="btnCart" mnemonicParsing="false" onAction="#handleShowCart" styleClass="icon-button" text="Cart (0)" />
                                 <Button mnemonicParsing="false" onAction="#handleShowLogin" styleClass="icon-button" text="Login / Admin" />
                             </children>
