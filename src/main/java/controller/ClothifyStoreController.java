@@ -33,12 +33,23 @@ import java.util.ResourceBundle;
 public class ClothifyStoreController implements Initializable {
 
     @FXML private FlowPane itemGrid;
-    @FXML private StackPane popupOverlay;
+    @FXML private TextField txtSearch;
+
+    // Top Nav Buttons
+    @FXML private Button btnLoginNav;
+    @FXML private Button btnRegisterNav;
 
     // Login Fields
+    @FXML private StackPane popupOverlay;
     @FXML private TextField txtUsername;
     @FXML private PasswordField txtPassword;
     @FXML private Label lblLoginError;
+
+    // Registration Fields (NEW)
+    @FXML private StackPane registerOverlay;
+    @FXML private TextField txtRegUsername;
+    @FXML private PasswordField txtRegPassword;
+    @FXML private Label lblRegError;
 
     // Cart Fields
     @FXML private StackPane cartOverlay;
@@ -48,15 +59,15 @@ public class ClothifyStoreController implements Initializable {
     @FXML private TextField txtCustomerName;
     @FXML private Label lblCheckoutStatus;
 
-    @FXML private TextField txtSearch;
-
     private ItemDao itemDao = new ItemDao();
     private UserDao userDao = new UserDao();
-    private OrderDao orderDao = new OrderDao(); // NEW: Database access for Orders
+    private OrderDao orderDao = new OrderDao();
 
-    // NEW: Memory list to hold items before checkout
     private List<Item> cartList = new ArrayList<>();
     private double currentTotal = 0.0;
+
+    // NEW: Track the currently logged-in customer!
+    private User loggedInCustomer = null;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -74,29 +85,96 @@ public class ClothifyStoreController implements Initializable {
         txtUsername.clear(); txtPassword.clear();
     }
 
+    @FXML void handleShowRegister(ActionEvent event) {
+        registerOverlay.setVisible(true);
+        lblRegError.setText("");
+    }
+
+    @FXML void handleCloseRegister(ActionEvent event) {
+        registerOverlay.setVisible(false);
+        txtRegUsername.clear(); txtRegPassword.clear();
+    }
+
     @FXML void handleShowCart(ActionEvent event) {
         cartOverlay.setVisible(true);
         lblCheckoutStatus.setText("");
+        // If logged in, pre-fill and hide the name field
+        if (loggedInCustomer != null) {
+            txtCustomerName.setText(loggedInCustomer.getUsername());
+            txtCustomerName.setVisible(false);
+            txtCustomerName.setManaged(false);
+        }
     }
 
     @FXML void handleCloseCart(ActionEvent event) {
         cartOverlay.setVisible(false);
     }
 
-    // ----- CART LOGIC -----
+    // ----- AUTHENTICATION LOGIC -----
+
+    @FXML void handleLoginSubmit(ActionEvent event) {
+        String username = txtUsername.getText();
+        String password = txtPassword.getText();
+        User user = userDao.getUserByUsername(username);
+
+        if (user != null && user.getPassword().equals(password)) {
+            if ("ADMIN".equals(user.getRole())) {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/View/AdminDashboard.fxml"));
+                    Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+                    stage.setScene(new Scene(loader.load()));
+                    stage.setTitle("Admin Dashboard");
+                    stage.show();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if ("CUSTOMER".equals(user.getRole())) {
+                // Customer Login Success!
+                loggedInCustomer = user;
+                handleClosePopup(null);
+                btnLoginNav.setText("Hi, " + user.getUsername());
+                btnRegisterNav.setVisible(false);
+                btnRegisterNav.setManaged(false);
+            }
+        } else {
+            lblLoginError.setText("Invalid username or password.");
+        }
+    }
+
+    @FXML void handleRegisterSubmit(ActionEvent event) {
+        String newUsername = txtRegUsername.getText();
+        String newPassword = txtRegPassword.getText();
+
+        if (newUsername.isEmpty() || newPassword.isEmpty()) {
+            lblRegError.setText("Please fill out all fields.");
+            return;
+        }
+
+        if (userDao.getUserByUsername(newUsername) != null) {
+            lblRegError.setText("Username already exists!");
+            return;
+        }
+
+        // Save new customer to database
+        User newCustomer = new User(newUsername, newPassword, "CUSTOMER");
+        userDao.saveUser(newCustomer);
+
+        lblRegError.setStyle("-fx-text-fill: green;");
+        lblRegError.setText("Success! You can now log in.");
+
+        // Clear fields so they are ready for next time
+        txtRegUsername.clear();
+        txtRegPassword.clear();
+    }
+
+    // ----- CART & CHECKOUT LOGIC -----
+
     private void addToCart(Item item) {
         cartList.add(item);
         currentTotal += item.getPrice();
-
-        // Update Cart Button Text
         btnCart.setText("Cart (" + cartList.size() + ")");
-
-        // Update Cart UI
         lblCartTotal.setText("Rs. " + currentTotal);
-
-        // Create a small text label for the cart popup
-        Label itemLabel = new Label("- " + item.getName() + " (Rs. " + item.getPrice() + ")");
-        cartItemsContainer.getChildren().add(itemLabel);
+        cartItemsContainer.getChildren().add(new Label("- " + item.getName() + " (Rs. " + item.getPrice() + ")"));
     }
 
     @FXML void handleCheckout(ActionEvent event) {
@@ -106,95 +184,53 @@ public class ClothifyStoreController implements Initializable {
             return;
         }
 
-        String customerName = txtCustomerName.getText();
-        if (customerName.isEmpty()) {
-            customerName = "Guest Customer";
-        }
+        String customerName = (loggedInCustomer != null) ? loggedInCustomer.getUsername() : txtCustomerName.getText();
+        if (customerName.isEmpty()) customerName = "Guest Customer";
 
-        // 1. Save order to database
-        Order newOrder = new Order(customerName, currentTotal);
-        orderDao.saveOrder(newOrder);
+        orderDao.saveOrder(new Order(customerName, currentTotal));
 
-        // 2. DEDUCT INVENTORY (NEW)
         for (Item cartItem : cartList) {
-            // Check if stock is greater than 0 to prevent negative inventory
             if (cartItem.getStockQuantity() > 0) {
                 cartItem.setStockQuantity(cartItem.getStockQuantity() - 1);
-                itemDao.saveOrUpdateItem(cartItem); // Update the database!
+                itemDao.saveOrUpdateItem(cartItem);
             }
         }
 
-        // 3. Clear the cart
         cartList.clear();
         currentTotal = 0.0;
         cartItemsContainer.getChildren().clear();
         btnCart.setText("Cart (0)");
         lblCartTotal.setText("Rs. 0.0");
-        txtCustomerName.clear();
+        if(loggedInCustomer == null) txtCustomerName.clear();
 
-        // 4. Show Success and Refresh Grid to show new stock levels
         lblCheckoutStatus.setStyle("-fx-text-fill: green;");
         lblCheckoutStatus.setText("Order placed successfully!");
-
-        // Refresh the UI to reflect lower stock numbers
         loadItemsToGrid();
     }
 
-    // ----- AUTHENTICATION LOGIC -----
-    @FXML void handleLoginSubmit(ActionEvent event) {
-        String username = txtUsername.getText();
-        String password = txtPassword.getText();
-
-        User user = userDao.getUserByUsername(username);
-
-        if (user != null && user.getPassword().equals(password) && "ADMIN".equals(user.getRole())) {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/View/AdminDashboard.fxml"));
-                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                stage.setScene(new Scene(loader.load()));
-                stage.setTitle("Admin Dashboard - Clothify Store");
-                stage.show();
-            } catch (IOException e) {
-                e.printStackTrace();
-                lblLoginError.setText("Error loading admin dashboard.");
-            }
-        } else {
-            lblLoginError.setText("Invalid username, password, or access level.");
-        }
-    }
+    // ----- PRODUCT GRID LOGIC -----
 
     @FXML void handleSearch(ActionEvent event) {
         String keyword = txtSearch.getText();
         if (keyword == null || keyword.trim().isEmpty()) {
-            loadItemsToGrid(); // If search is empty, load all items
+            loadItemsToGrid();
             return;
         }
-
-        // Fetch filtered items
         List<Item> searchResults = itemDao.searchItemsByName(keyword);
-
-        // Clear grid and show results
         itemGrid.getChildren().clear();
-        for (Item item : searchResults) {
-            itemGrid.getChildren().add(createProductCard(item));
-        }
+        for (Item item : searchResults) itemGrid.getChildren().add(createProductCard(item));
     }
 
-    // ----- PRODUCT GRID LOGIC -----
     private void loadItemsToGrid() {
         itemGrid.getChildren().clear();
         List<Item> items = itemDao.getAllItems();
-
-        for (Item item : items) {
-            VBox productCard = createProductCard(item);
-            itemGrid.getChildren().add(productCard);
-        }
+        for (Item item : items) itemGrid.getChildren().add(createProductCard(item));
     }
 
     private VBox createProductCard(Item item) {
         VBox card = new VBox(10);
         card.getStyleClass().add("product-card");
-        card.setPrefSize(220, 310); // Slightly taller to fit the button
+        card.setPrefSize(220, 310);
         card.setPadding(new Insets(20));
         card.setAlignment(Pos.BOTTOM_CENTER);
 
@@ -209,10 +245,9 @@ public class ClothifyStoreController implements Initializable {
         Label priceLabel = new Label("Rs. " + item.getPrice());
         priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #E53935;");
 
-        // NEW: Add to Cart Button for each item!
         Button btnAdd = new Button("Add to Cart");
         btnAdd.setStyle("-fx-background-color: white; -fx-border-color: #111; -fx-cursor: hand; -fx-pref-width: 150;");
-        btnAdd.setOnAction(e -> addToCart(item)); // Connects button to our logic
+        btnAdd.setOnAction(e -> addToCart(item));
 
         card.getChildren().addAll(nameLabel, categoryLabel, priceLabel, btnAdd);
         return card;
