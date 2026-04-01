@@ -1,222 +1,96 @@
 package controller;
 
+import dao.ItemDao;
+import entity.Item;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-
-import javafx.scene.control.Alert;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
-import java.util.logging.Logger;
 
 public class ClothifyStoreController implements Initializable {
 
-    Logger logger = Logger.getLogger(getClass().getName());
+    // FXML Injections matching the IDs in Scene Builder
+    @FXML
+    private FlowPane itemGrid;
 
+    @FXML
+    private StackPane popupOverlay;
 
-    // FXML INJECTION: LAYOUTS & PANES
-
-    @FXML
-    private StackPane mainRoot;
-    @FXML
-    private VBox loginPane;
-    @FXML
-    private BorderPane dashboardPane;
-    @FXML
-    private StackPane verificationOverlay;
-
-    // Content Views (The different forms inside the dashboard)
-    @FXML
-    private VBox viewStore;
-    @FXML
-    private VBox viewCashierReg;
-    @FXML
-    private VBox viewCustomerReg;
-    @FXML
-    private VBox viewOrder;
-    @FXML
-    private VBox viewProfile;
-
-
-    // FXML INJECTION: INPUT FIELDS
-
-    // Login
-    @FXML
-    private TextField txtLoginUser;
-    @FXML
-    private PasswordField txtLoginPass;
-
-    // Verification
-    @FXML
-    private TextField txtVerifyAdminUser;
-
-    // Cashier Form
-    @FXML
-    private TextField txtCashierName;
-    @FXML
-    private TextField txtCashierPhone;
-    @FXML
-    private TextField txtCashierNic;
-
-    // Customer Form
-    @FXML
-    private TextField txtCustomerName;
-    @FXML
-    private TextField txtCustomerPhone;
-
+    // Database access object
+    private ItemDao itemDao = new ItemDao();
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
-        loginPane.setVisible(true);
-        dashboardPane.setVisible(true);
-
+        // This runs automatically when the UI loads
+        loadItemsToGrid();
     }
 
-
     @FXML
-    void handleLogin(ActionEvent event) {
-        String username = txtLoginUser.getText();
-        String password = txtLoginPass.getText();
+    void handleShowLogin(ActionEvent event) {
+        // This empty method fixes your crash!
+        // In the next commit, we will make this open the Admin Login popup.
+        System.out.println("Login button clicked! Admin panel coming soon.");
+    }
 
+    private void loadItemsToGrid() {
+        itemGrid.getChildren().clear();
 
-        if (username.equals("admin") && password.equals("1234")) {
+        // Fetch items from your MySQL Database!
+        List<Item> items = itemDao.getAllItems();
 
-            loginPane.setVisible(false);
-            dashboardPane.setVisible(true);
-            switchView(viewStore);
-            clearLoginFields();
-        } else {
-            showAlert(Alert.AlertType.ERROR, "Login Failed", "Invalid Username or Password.");
+        // If the database is empty, let's auto-generate some dummy items
+        // just to see what the UI looks like.
+        if (items.isEmpty()) {
+            System.out.println("Database is empty. Generating sample items...");
+            itemDao.saveOrUpdateItem(new Item("Moose Heritage Polo", "MEN", 2790.0, 50));
+            itemDao.saveOrUpdateItem(new Item("Oversized Graphic Tee", "UNISEX", 1990.0, 30));
+            itemDao.saveOrUpdateItem(new Item("Premium Casual Shirt", "MEN", 3490.0, 20));
+            itemDao.saveOrUpdateItem(new Item("Floral Summer Dress", "WOMEN", 4290.0, 15));
+            itemDao.saveOrUpdateItem(new Item("Luxury Gold Watch", "JEWELLERY", 15000.0, 5));
+
+            // Re-fetch the newly created items from the database
+            items = itemDao.getAllItems();
+        }
+
+        // Loop through the database items and create a visual card for each one
+        for (Item item : items) {
+            VBox productCard = createProductCard(item);
+            itemGrid.getChildren().add(productCard);
         }
     }
 
-    @FXML
-    void handleLogout(ActionEvent event) {
+    // A helper method to draw a product card programmatically
+    private VBox createProductCard(Item item) {
+        VBox card = new VBox(10); // 10px spacing between elements
+        card.getStyleClass().add("product-card"); // Connects to the CSS we wrote in Commit 4
+        card.setPrefSize(220, 280);
+        card.setPadding(new Insets(20));
+        card.setAlignment(Pos.BOTTOM_CENTER);
 
-        dashboardPane.setVisible(false);
-        loginPane.setVisible(true);
-        clearLoginFields();
-    }
+        // Item Name
+        Label nameLabel = new Label(item.getName());
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #111;");
+        nameLabel.setWrapText(true);
+        nameLabel.setAlignment(Pos.CENTER);
 
+        // Item Category
+        Label categoryLabel = new Label(item.getCategory());
+        categoryLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #888;");
 
+        // Item Price
+        Label priceLabel = new Label("Rs. " + item.getPrice());
+        priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #E53935;");
 
-
-    private void switchView(VBox targetView) {
-
-        viewStore.setVisible(false);
-        viewCashierReg.setVisible(false);
-        viewCustomerReg.setVisible(false);
-        viewOrder.setVisible(false);
-        viewProfile.setVisible(false);
-
-
-        targetView.setVisible(true);
-    }
-
-    @FXML
-    void handleShowStore(ActionEvent event) {
-        switchView(viewStore);
-    }
-
-    @FXML
-    void handleShowProfile(ActionEvent event) {
-        switchView(viewProfile);
-    }
-
-    @FXML
-    void handleShowAddCustomer(ActionEvent event) {
-        switchView(viewCustomerReg);
-    }
-
-    @FXML
-    void handleShowOrder(ActionEvent event) {
-        switchView(viewOrder);
-    }
-
-
-    @FXML
-    void handleNavAddCashier(ActionEvent event) {
-        txtVerifyAdminUser.setText("");
-        verificationOverlay.setVisible(true);
-    }
-
-
-    @FXML
-    void actionVerifyAdmin(ActionEvent event) {
-        String adminCheck = txtVerifyAdminUser.getText();
-
-
-        if (adminCheck.equals("admin")) {
-
-            verificationOverlay.setVisible(false);
-            switchView(viewCashierReg);
-        } else {
-            showAlert(Alert.AlertType.ERROR, "Access Denied", "Incorrect Admin Username.");
-        }
-    }
-
-    @FXML
-    void closeVerification(ActionEvent event) {
-        verificationOverlay.setVisible(false);
-    }
-
-
-
-    @FXML
-    void actionAddCashier(ActionEvent event) {
-
-        if (txtCashierName.getText().isEmpty() || txtCashierPhone.getText().isEmpty() || txtCashierNic.getText().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Incomplete", "Please fill all fields.");
-            return;
-        }
-
-
-        logger.info("Cashier Added: " + txtCashierName.getText());
-
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Cashier registered successfully!");
-
-
-        txtCashierName.clear();
-        txtCashierPhone.clear();
-        txtCashierNic.clear();
-    }
-
-    @FXML
-    void actionAddCustomer(ActionEvent event) {
-        if (txtCustomerName.getText().isEmpty() || txtCustomerPhone.getText().isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Incomplete", "Please fill all fields.");
-            return;
-        }
-
-
-        logger.info("Customer Added: " + txtCustomerName.getText());
-
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Customer added successfully!");
-
-
-        txtCustomerName.clear();
-        txtCustomerPhone.clear();
-    }
-
-
-
-    private void clearLoginFields() {
-        txtLoginUser.clear();
-        txtLoginPass.clear();
-    }
-
-    private void showAlert(Alert.AlertType type, String title, String content) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(content);
-        alert.showAndWait();
+        card.getChildren().addAll(nameLabel, categoryLabel, priceLabel);
+        return card;
     }
 }
