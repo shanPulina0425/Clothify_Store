@@ -10,7 +10,7 @@ import java.util.List;
 
 public class UserDao {
 
-    // Saves a new user to the database
+
     public void saveUser(User user) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -25,7 +25,7 @@ public class UserDao {
         }
     }
 
-    // Finds a user by their username (Used for Login!)
+
     public User getUserByUsername(String username) {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             Query<User> query = session.createQuery("FROM User WHERE username = :username", User.class);
@@ -37,7 +37,6 @@ public class UserDao {
         }
     }
 
-    // Gets a list of all users (Used for Admin panel)
     public List<User> getAllUsers() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return session.createQuery("FROM User", User.class).list();

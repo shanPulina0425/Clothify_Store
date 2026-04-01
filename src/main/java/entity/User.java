@@ -13,7 +13,7 @@ public class User {
     private String password;
     private String role; // "ADMIN" or "USER"
 
-    // Constructors
+
     public User() {}
     public User(String username, String password, String role) {
         this.username = username;
@@ -21,7 +21,7 @@ public class User {
         this.role = role;
     }
 
-    // Getters and Setters
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }

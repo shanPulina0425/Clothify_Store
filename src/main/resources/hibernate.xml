@@ -13,5 +13,7 @@
 
         <mapping class="entity.User"/>
         <mapping class="entity.Item"/>
+        <mapping class="entity.Order"/>
+
     </session-factory>
 </hibernate-configuration>

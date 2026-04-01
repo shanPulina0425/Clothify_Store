@@ -10,12 +10,12 @@ import java.util.List;
 
 public class ItemDao {
 
-    // Saves a new item or updates an existing one
+
     public void saveOrUpdateItem(Item item) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             transaction = session.beginTransaction();
-            session.merge(item); // merge handles both Insert (new) and Update (existing)
+            session.merge(item);
             transaction.commit();
         } catch (Exception e) {
             if (transaction != null) {
@@ -25,7 +25,7 @@ public class ItemDao {
         }
     }
 
-    // Deletes an item by its ID
+
     public void deleteItem(Long id) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -43,7 +43,7 @@ public class ItemDao {
         }
     }
 
-    // Fetches all items in the store
+
     public List<Item> getAllItems() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
             return session.createQuery("FROM Item", Item.class).list();
