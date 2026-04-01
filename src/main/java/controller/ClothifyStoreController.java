@@ -1,8 +1,10 @@
 package controller;
 
 import dao.ItemDao;
+import dao.OrderDao;
 import dao.UserDao;
 import entity.Item;
+import entity.Order;
 import entity.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,16 +14,19 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -35,8 +40,21 @@ public class ClothifyStoreController implements Initializable {
     @FXML private PasswordField txtPassword;
     @FXML private Label lblLoginError;
 
+    // Cart Fields
+    @FXML private StackPane cartOverlay;
+    @FXML private VBox cartItemsContainer;
+    @FXML private Label lblCartTotal;
+    @FXML private Button btnCart;
+    @FXML private TextField txtCustomerName;
+    @FXML private Label lblCheckoutStatus;
+
     private ItemDao itemDao = new ItemDao();
-    private UserDao userDao = new UserDao(); // NEW: Added UserDao for login
+    private UserDao userDao = new UserDao();
+    private OrderDao orderDao = new OrderDao(); // NEW: Database access for Orders
+
+    // NEW: Memory list to hold items before checkout
+    private List<Item> cartList = new ArrayList<>();
+    private double currentTotal = 0.0;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -44,34 +62,79 @@ public class ClothifyStoreController implements Initializable {
     }
 
     // ----- UI TOGGLES -----
-
-    @FXML
-    void handleShowLogin(ActionEvent event) {
+    @FXML void handleShowLogin(ActionEvent event) {
         popupOverlay.setVisible(true);
-        lblLoginError.setText(""); // Clear old errors
+        lblLoginError.setText("");
     }
 
-    @FXML
-    void handleClosePopup(ActionEvent event) {
+    @FXML void handleClosePopup(ActionEvent event) {
         popupOverlay.setVisible(false);
-        txtUsername.clear();
-        txtPassword.clear();
+        txtUsername.clear(); txtPassword.clear();
+    }
+
+    @FXML void handleShowCart(ActionEvent event) {
+        cartOverlay.setVisible(true);
+        lblCheckoutStatus.setText("");
+    }
+
+    @FXML void handleCloseCart(ActionEvent event) {
+        cartOverlay.setVisible(false);
+    }
+
+    // ----- CART LOGIC -----
+    private void addToCart(Item item) {
+        cartList.add(item);
+        currentTotal += item.getPrice();
+
+        // Update Cart Button Text
+        btnCart.setText("Cart (" + cartList.size() + ")");
+
+        // Update Cart UI
+        lblCartTotal.setText("Rs. " + currentTotal);
+
+        // Create a small text label for the cart popup
+        Label itemLabel = new Label("- " + item.getName() + " (Rs. " + item.getPrice() + ")");
+        cartItemsContainer.getChildren().add(itemLabel);
+    }
+
+    @FXML void handleCheckout(ActionEvent event) {
+        if (cartList.isEmpty()) {
+            lblCheckoutStatus.setStyle("-fx-text-fill: red;");
+            lblCheckoutStatus.setText("Your cart is empty!");
+            return;
+        }
+
+        String customerName = txtCustomerName.getText();
+        if (customerName.isEmpty()) {
+            customerName = "Guest Customer";
+        }
+
+        // 1. Save order to database
+        Order newOrder = new Order(customerName, currentTotal);
+        orderDao.saveOrder(newOrder);
+
+        // 2. Clear the cart
+        cartList.clear();
+        currentTotal = 0.0;
+        cartItemsContainer.getChildren().clear();
+        btnCart.setText("Cart (0)");
+        lblCartTotal.setText("Rs. 0.0");
+        txtCustomerName.clear();
+
+        // 3. Show Success
+        lblCheckoutStatus.setStyle("-fx-text-fill: green;");
+        lblCheckoutStatus.setText("Order placed successfully! Thank you.");
     }
 
     // ----- AUTHENTICATION LOGIC -----
-
-    @FXML
-    void handleLoginSubmit(ActionEvent event) {
+    @FXML void handleLoginSubmit(ActionEvent event) {
         String username = txtUsername.getText();
         String password = txtPassword.getText();
 
-        // Query the database for the user
         User user = userDao.getUserByUsername(username);
 
-        // Check if user exists, password matches, and role is ADMIN
         if (user != null && user.getPassword().equals(password) && "ADMIN".equals(user.getRole())) {
             try {
-                // Login Success! Load the Admin Dashboard
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/View/AdminDashboard.fxml"));
                 Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
                 stage.setScene(new Scene(loader.load()));
@@ -82,25 +145,14 @@ public class ClothifyStoreController implements Initializable {
                 lblLoginError.setText("Error loading admin dashboard.");
             }
         } else {
-            // Login Failed
             lblLoginError.setText("Invalid username, password, or access level.");
         }
     }
 
-    // ----- PRODUCT GRID LOGIC (From Commit 5) -----
-
+    // ----- PRODUCT GRID LOGIC -----
     private void loadItemsToGrid() {
         itemGrid.getChildren().clear();
         List<Item> items = itemDao.getAllItems();
-
-        if (items.isEmpty()) {
-            itemDao.saveOrUpdateItem(new Item("Moose Heritage Polo", "MEN", 2790.0, 50));
-            itemDao.saveOrUpdateItem(new Item("Oversized Graphic Tee", "UNISEX", 1990.0, 30));
-            itemDao.saveOrUpdateItem(new Item("Premium Casual Shirt", "MEN", 3490.0, 20));
-            itemDao.saveOrUpdateItem(new Item("Floral Summer Dress", "WOMEN", 4290.0, 15));
-            itemDao.saveOrUpdateItem(new Item("Luxury Gold Watch", "JEWELLERY", 15000.0, 5));
-            items = itemDao.getAllItems();
-        }
 
         for (Item item : items) {
             VBox productCard = createProductCard(item);
@@ -111,7 +163,7 @@ public class ClothifyStoreController implements Initializable {
     private VBox createProductCard(Item item) {
         VBox card = new VBox(10);
         card.getStyleClass().add("product-card");
-        card.setPrefSize(220, 280);
+        card.setPrefSize(220, 310); // Slightly taller to fit the button
         card.setPadding(new Insets(20));
         card.setAlignment(Pos.BOTTOM_CENTER);
 
@@ -126,7 +178,12 @@ public class ClothifyStoreController implements Initializable {
         Label priceLabel = new Label("Rs. " + item.getPrice());
         priceLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #E53935;");
 
-        card.getChildren().addAll(nameLabel, categoryLabel, priceLabel);
+        // NEW: Add to Cart Button for each item!
+        Button btnAdd = new Button("Add to Cart");
+        btnAdd.setStyle("-fx-background-color: white; -fx-border-color: #111; -fx-cursor: hand; -fx-pref-width: 150;");
+        btnAdd.setOnAction(e -> addToCart(item)); // Connects button to our logic
+
+        card.getChildren().addAll(nameLabel, categoryLabel, priceLabel, btnAdd);
         return card;
     }
 }
