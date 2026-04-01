@@ -1,173 +1,87 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 
-<StackPane fx:id="mainRoot" prefHeight="600.0" prefWidth="900.0" styleClass="root-pane" stylesheets="@/Styles/clothify.css" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.ClothifyStoreController">
+<StackPane fx:id="mainRoot" prefHeight="720.0" prefWidth="1080.0" styleClass="root-pane" stylesheets="@../Styles/clothify.css" xmlns="http://javafx.com/javafx/23" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.ClothifyStoreController">
     <children>
-        <BorderPane fx:id="dashboardPane" visible="false">
-            <left>
-                <VBox prefHeight="600.0" prefWidth="220.0" spacing="20.0" styleClass="sidebar" BorderPane.alignment="CENTER">
+        <BorderPane>
+
+            <top>
+                <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="10.0" styleClass="nav-bar" BorderPane.alignment="CENTER">
                     <children>
-                        <Label styleClass="logo-text" text="Clothify Store" />
-                        <Separator opacity="0.3" prefWidth="200.0" />
-                        <Button fx:id="btnNavStore" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleShowStore" styleClass="nav-button" text="Store" />
-                        <Button fx:id="btnNavAddCashier" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleNavAddCashier" styleClass="nav-button" text="Add Cashier" />
-                        <Button fx:id="btnNavProfile" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleShowProfile" styleClass="nav-button" text="Cashier Profile" />
-                        <Button fx:id="btnNavAddCustomer" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleShowAddCustomer" styleClass="nav-button" text="Add Customer" />
-                        <Button fx:id="btnNavOrder" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleShowOrder" styleClass="nav-button" text="Order" />
-                        <Region VBox.vgrow="ALWAYS" />
-                        <Button maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#handleLogout" styleClass="logout-button" text="Log Out" />
-                    </children>
-                    <padding>
-                        <Insets bottom="20.0" left="20.0" right="20.0" top="30.0" />
-                    </padding>
-                </VBox>
-            </left>
+                        <Label styleClass="logo-text" text="CLOTHIFY" />
 
-            <center>
-                <StackPane fx:id="contentArea" styleClass="content-area">
-                    <children>
+                        <Region HBox.hgrow="ALWAYS" />
 
-                        <VBox fx:id="viewStore" alignment="CENTER" spacing="20.0">
+                        <HBox alignment="CENTER" spacing="5.0">
                             <children>
-                                <Label styleClass="header-label" text="Welcome to Clothify Store" />
-                                <Label styleClass="sub-label" text="Select an option from the menu to begin." />
+                                <Button mnemonicParsing="false" styleClass="nav-link" text="WOMEN" />
+                                <Button mnemonicParsing="false" styleClass="nav-link" text="MEN" />
+                                <Button mnemonicParsing="false" styleClass="nav-link" text="UNISEX" />
+                                <Button mnemonicParsing="false" styleClass="nav-link" text="COSMETICS" />
+                                <Button mnemonicParsing="false" styleClass="nav-link" text="JEWELLERY" />
                             </children>
-                        </VBox>
+                        </HBox>
 
-                        <VBox fx:id="viewCashierReg" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="450.0" prefWidth="500.0" spacing="25.0" styleClass="form-container" visible="false">
+                        <Region HBox.hgrow="ALWAYS" />
+
+                        <HBox alignment="CENTER_RIGHT" spacing="15.0">
                             <children>
-                                <Label styleClass="form-header" text="Cashier Registration" />
-                                <VBox spacing="10.0">
-                                    <children>
-                                        <Label text="Name" textFill="WHITE" />
-                                        <TextField fx:id="txtCashierName" promptText="Enter Cashier Name" styleClass="text-field-custom" />
-                                    </children>
-                                </VBox>
-                                <VBox spacing="10.0">
-                                    <children>
-                                        <Label text="Phone Number" textFill="WHITE" />
-                                        <TextField fx:id="txtCashierPhone" promptText="Enter Phone Number" styleClass="text-field-custom" />
-                                    </children>
-                                </VBox>
-                                <VBox spacing="10.0">
-                                    <children>
-                                        <Label text="NIC" textFill="WHITE" />
-                                        <TextField fx:id="txtCashierNic" promptText="Enter NIC" styleClass="text-field-custom" />
-                                    </children>
-                                </VBox>
-                                <Button mnemonicParsing="false" onAction="#actionAddCashier" prefWidth="150.0" styleClass="action-button" text="Add" />
-                            </children>
-                            <padding>
-                                <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
-                            </padding>
-                        </VBox>
-
-                        <VBox fx:id="viewCustomerReg" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="400.0" prefWidth="500.0" spacing="25.0" styleClass="form-container" visible="false">
-                            <children>
-                                <Label styleClass="form-header" text="Customer Registration" />
-                                <VBox spacing="10.0">
-                                    <children>
-                                        <Label text="Name" textFill="WHITE" />
-                                        <TextField fx:id="txtCustomerName" promptText="Enter Customer Name" styleClass="text-field-custom" />
-                                    </children>
-                                </VBox>
-                                <VBox spacing="10.0">
-                                    <children>
-                                        <Label text="Phone Number" textFill="WHITE" />
-                                        <TextField fx:id="txtCustomerPhone" promptText="Enter Phone Number" styleClass="text-field-custom" />
-                                    </children>
-                                </VBox>
-                                <Button mnemonicParsing="false" onAction="#actionAddCustomer" prefWidth="150.0" styleClass="action-button" text="Add" />
-                            </children>
-                            <padding>
-                                <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
-                            </padding>
-                        </VBox>
-
-                        <VBox fx:id="viewOrder" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="400.0" prefWidth="500.0" styleClass="form-container" visible="false">
-                            <children>
-                                <Label styleClass="form-header" text="Place Order" />
-                                <Label text="Order Form Components Go Here" textFill="#aaaaaa" />
-                            </children>
-                        </VBox>
-
-                        <VBox fx:id="viewProfile" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="400.0" prefWidth="500.0" styleClass="form-container" visible="false">
-                            <children>
-                                <Label styleClass="form-header" text="Cashier Profile" />
-                                <Label text="Profile Details Go Here" textFill="#aaaaaa" />
-                            </children>
-                        </VBox>
-
-                    </children>
-                </StackPane>
-            </center>
-        </BorderPane>
-
-        <StackPane fx:id="verificationOverlay" style="-fx-background-color: rgba(0,0,0,0.8);" visible="false">
-            <children>
-                <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="250.0" prefWidth="400.0" spacing="20.0" styleClass="popup-container">
-                    <children>
-                        <Label styleClass="form-header" text="Admin Verification" />
-                        <Label text="Please enter Admin Username to continue" textFill="#cccccc" />
-                        <TextField fx:id="txtVerifyAdminUser" promptText="Admin Username" styleClass="text-field-custom" />
-                        <HBox alignment="CENTER" spacing="20.0">
-                            <children>
-                                <Button mnemonicParsing="false" onAction="#actionVerifyAdmin" prefWidth="100.0" styleClass="action-button" text="OK" />
-                                <Button mnemonicParsing="false" onAction="#closeVerification" prefWidth="100.0" styleClass="cancel-button" text="Cancel" />
+                                <Button mnemonicParsing="false" styleClass="icon-button" text="Search" />
+                                <Button mnemonicParsing="false" styleClass="icon-button" text="Cart (0)" />
+                                <Button mnemonicParsing="false" onAction="#handleShowLogin" styleClass="icon-button" text="Login / Admin" />
                             </children>
                         </HBox>
                     </children>
-                    <padding>
-                        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
-                    </padding>
-                </VBox>
-            </children>
-        </StackPane>
+                </HBox>
+            </top>
 
-        <VBox fx:id="loginPane" alignment="CENTER" prefHeight="600.0" prefWidth="900.0" spacing="0.0" styleClass="login-bg">
-            <children>
-                <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="400.0" prefWidth="450.0" spacing="30.0" styleClass="login-box">
-                    <children>
-                        <Label styleClass="login-title" text="Admin Login" />
-                        <VBox alignment="CENTER_LEFT" spacing="10.0">
+            <center>
+                <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" BorderPane.alignment="CENTER">
+                    <content>
+                        <VBox alignment="TOP_CENTER" spacing="30.0">
+                            <padding>
+                                <Insets bottom="40.0" left="40.0" right="40.0" top="30.0" />
+                            </padding>
                             <children>
-                                <Label text="User Name" textFill="WHITE">
-                                    <font>
-                                        <Font name="System Bold" size="12.0" />
-                                    </font>
-                                </Label>
-                                <TextField fx:id="txtLoginUser" promptText="Enter Username" styleClass="text-field-custom" />
+
+                                <StackPane prefHeight="300.0" styleClass="hero-banner">
+                                    <children>
+                                        <VBox alignment="CENTER" spacing="10.0">
+                                            <children>
+                                                <Label styleClass="hero-text" text="STANDOUT COLLECTION" />
+                                                <Label styleClass="hero-subtext" text="Looks like you change the vibe—without changing outfits." />
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </StackPane>
+
+                                <HBox alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label styleClass="section-title" text="LATEST IN STORE THIS WEEK" />
+                                    </children>
+                                </HBox>
+
+                                <FlowPane fx:id="itemGrid" hgap="25.0" vgap="30.0" alignment="CENTER_LEFT" />
+
                             </children>
                         </VBox>
-                        <VBox alignment="CENTER_LEFT" spacing="10.0">
-                            <children>
-                                <Label text="Password" textFill="WHITE">
-                                    <font>
-                                        <Font name="System Bold" size="12.0" />
-                                    </font>
-                                </Label>
-                                <PasswordField fx:id="txtLoginPass" promptText="Enter Password" styleClass="text-field-custom" />
-                            </children>
-                        </VBox>
-                        <Button fx:id="btnLogin" mnemonicParsing="false" onAction="#handleLogin" prefHeight="40.0" prefWidth="120.0" styleClass="action-button" text="Sign in">
-                            <VBox.margin>
-                                <Insets top="20.0" />
-                            </VBox.margin>
-                        </Button>
-                    </children>
-                    <padding>
-                        <Insets bottom="40.0" left="50.0" right="50.0" top="40.0" />
-                    </padding>
-                </VBox>
-            </children>
-        </VBox>
+                    </content>
+                </ScrollPane>
+            </center>
+
+        </BorderPane>
+
+        <StackPane fx:id="popupOverlay" style="-fx-background-color: rgba(0,0,0,0.6);" visible="false" />
 
     </children>
 </StackPane>
